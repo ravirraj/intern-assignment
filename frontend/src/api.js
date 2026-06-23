@@ -30,8 +30,3 @@ export async function fetchRanking(page = 1, limit = 20) {
   }
   return res.json();
 }
-
-export async function checkHealth() {
-  const res = await fetch(`${API_BASE}/health`);
-  return res.ok;
-}
