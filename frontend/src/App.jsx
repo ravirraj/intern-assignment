@@ -1,11 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TransactionForm from "./components/TransactionForm";
 import UserSummary from "./components/UserSummary";
 import RankingTable from "./components/RankingTable";
+import { checkHealth } from "./api";
+
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("ranking");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [backendStatus, setBackendStatus] = useState("checking");
+
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const ok = await checkHealth();
+        setBackendStatus(ok ? "online" : "offline");
+      } catch {
+        setBackendStatus("offline");
+      }
+    };
+    check();
+    const interval = setInterval(check, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleTransactionSuccess = () => {
     setRefreshKey((k) => k + 1);
@@ -46,6 +64,23 @@ export default function App() {
           <TransactionForm onSuccess={handleTransactionSuccess} />
         )}
       </main>
+
+      <footer className="status-badge">
+        <span className={`status-dot ${backendStatus}`} />
+        <span className="status-text">
+          {backendStatus === "checking" && "Checking backend..."}
+          {backendStatus === "online" && "Backend is live"}
+          {backendStatus === "offline" && "Backend is down"}
+        </span>
+        <a
+          className="status-link"
+          href={`${API_BASE}/health`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Check here
+        </a>
+      </footer>
     </div>
   );
 }
